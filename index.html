@@ -1,621 +1,750 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MaxCombine | Concatenation Supremacy Engine</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --gold-1: #fff8e1;
-      --gold-2: #ffe082;
-      --gold-3: #ffd54f;
-      --gold-4: #ffb300;
-      --gold-5: #d4af37;
-      --gold-6: #b8860b;
-      --ink-1: #0a0a0b;
-      --ink-2: #111113;
-      --ink-3: #18181b;
-      --ink-4: #27272a;
-      --ink-5: #3f3f46;
-      --success: #22c55e;
-      --danger: #ef4444;
-      --glass: rgba(255, 255, 255, 0.04);
-      --glass-border: rgba(255, 215, 0, 0.12);
-    }
-
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background: var(--ink-1);
-      color: var(--gold-1);
-      overflow-x: hidden;
-      min-height: 100vh;
-    }
-
-    #void {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    .grain {
-      position: fixed;
-      inset: 0;
-      z-index: 1;
-      pointer-events: none;
-      opacity: 0.07;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    }
-
-    .page { position: relative; z-index: 2; }
-
-    header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1.25rem 4vw;
-      background: linear-gradient(180deg, rgba(10,10,11,0.92) 0%, rgba(10,10,11,0) 100%);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid transparent;
-      transition: border-color 0.4s ease, background 0.4s ease;
-    }
-
-    header.scrolled {
-      background: rgba(10,10,11,0.82);
-      border-bottom-color: var(--glass-border);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-family: 'Playfair Display', serif;
-      font-weight: 900;
-      font-size: 1.5rem;
-      letter-spacing: 0.04em;
-      color: var(--gold-2);
-    }
-
-    .brand-mark {
-      width: 36px;
-      height: 36px;
-      border: 2px solid var(--gold-5);
-      border-radius: 10px;
-      display: grid;
-      place-items: center;
-      font-size: 1.1rem;
-      background: linear-gradient(135deg, rgba(212,175,55,0.15), transparent);
-    }
-
-    nav {
-      display: flex;
-      gap: 2.25rem;
-      font-size: 0.82rem;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    nav a {
-      color: var(--gold-1);
-      text-decoration: none;
-      opacity: 0.7;
-      transition: opacity 0.25s ease, color 0.25s ease;
-    }
-
-    nav a:hover { opacity: 1; color: var(--gold-4); }
-
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 8rem 4vw 5rem;
-      position: relative;
-    }
-
-    .hero-eyebrow {
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--gold-5);
-      margin-bottom: 1.25rem;
-    }
-
-    .hero-title {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(3rem, 9vw, 7.5rem);
-      font-weight: 900;
-      line-height: 0.95;
-      margin: 0 0 1.5rem;
-      background: linear-gradient(180deg, var(--gold-1) 0%, var(--gold-5) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .hero-subtitle {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1.25rem, 2.2vw, 1.75rem);
-      font-weight: 400;
-      color: rgba(255,248,225,0.72);
-      max-width: 720px;
-      margin: 0 auto 3.5rem;
-      line-height: 1.5;
-    }
-
-    .hero-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 1rem 2.25rem;
-      border-radius: 999px;
-      border: 1px solid var(--gold-5);
-      background: linear-gradient(135deg, rgba(212,175,55,0.18), rgba(184,134,11,0.08));
-      color: var(--gold-2);
-      font-size: 0.85rem;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      text-decoration: none;
-      cursor: pointer;
-      transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-    }
-
-    .hero-cta:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 40px rgba(255,179,0,0.18);
-      background: linear-gradient(135deg, rgba(212,175,55,0.28), rgba(184,134,11,0.14));
-    }
-
-    .section {
-      padding: 6rem 4vw;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .section-title {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(2rem, 4.5vw, 3.25rem);
-      font-weight: 700;
-      margin: 0 0 1rem;
-      color: var(--gold-2);
-    }
-
-    .section-lead {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.35rem;
-      color: rgba(255,248,225,0.7);
-      max-width: 720px;
-      margin: 0 0 3rem;
-      line-height: 1.5;
-    }
-
-    .console {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: 24px;
-      padding: 2rem;
-      backdrop-filter: blur(20px);
-      box-shadow: 0 40px 100px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
-    }
-
-    .input-row {
-      display: flex;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-    }
-
-    .input-row input {
-      flex: 1 1 220px;
-      min-width: 220px;
-      background: rgba(0,0,0,0.28);
-      border: 1px solid var(--ink-5);
-      border-radius: 12px;
-      padding: 0.95rem 1.25rem;
-      color: var(--gold-1);
-      font-size: 1rem;
-      outline: none;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .input-row input:focus {
-      border-color: var(--gold-5);
-      box-shadow: 0 0 0 3px rgba(212,175,55,0.12);
-    }
-
-    .input-row input::placeholder { color: rgba(255,248,225,0.35); }
-
-    .btn {
-      padding: 0.95rem 1.6rem;
-      border-radius: 12px;
-      border: 1px solid var(--ink-5);
-      background: var(--ink-3);
-      color: var(--gold-1);
-      font-size: 0.82rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-    }
-
-    .btn:hover {
-      border-color: var(--gold-5);
-      color: var(--gold-2);
-      background: var(--ink-4);
-    }
-
-    .btn-gold {
-      background: linear-gradient(135deg, var(--gold-5), var(--gold-6));
-      color: var(--ink-1);
-      border-color: var(--gold-5);
-    }
-
-    .btn-gold:hover { box-shadow: 0 0 30px rgba(255,179,0,0.22); }
-
-    .chip-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-      margin-bottom: 1.5rem;
-      min-height: 44px;
-    }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 0.9rem;
-      border-radius: 999px;
-      background: rgba(255,215,0,0.08);
-      border: 1px solid rgba(255,215,0,0.18);
-      color: var(--gold-2);
-      font-size: 0.9rem;
-      font-weight: 600;
-      animation: chipIn 0.3s ease both;
-    }
-
-    @keyframes chipIn {
-      from { opacity: 0; transform: scale(0.85) translateY(6px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
-
-    .chip button {
-      background: transparent;
-      border: none;
-      color: var(--gold-5);
-      font-size: 1rem;
-      line-height: 1;
-      cursor: pointer;
-      padding: 0 0 0 0.2rem;
-    }
-
-    .result-plate {
-      background: linear-gradient(135deg, rgba(0,0,0,0.45), rgba(0,0,0,0.25));
-      border: 1px solid var(--gold-5);
-      border-radius: 16px;
-      padding: 1.75rem 2rem;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .result-plate::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(120deg, transparent 40%, rgba(255,215,0,0.08) 50%, transparent 60%);
-      transform: translateX(-100%);
-      transition: transform 0.8s ease;
-    }
-
-    .result-plate.shine::before { transform: translateX(100%); }
-
-    .result-label {
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--gold-5);
-      margin-bottom: 0.75rem;
-    }
-
-    .result-value {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(1.75rem, 5vw, 3.5rem);
-      font-weight: 900;
-      color: var(--gold-2);
-      word-break: break-all;
-      line-height: 1.1;
-    }
-
-    .result-meta {
-      margin-top: 1rem;
-      font-size: 0.8rem;
-      color: rgba(255,248,225,0.55);
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 2rem;
-    }
-
-    .card {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: 20px;
-      padding: 1.75rem;
-      backdrop-filter: blur(16px);
-      transition: transform 0.25s ease, border-color 0.25s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(255,215,0,0.28);
-    }
-
-    .card h3 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.35rem;
-      margin: 0 0 0.75rem;
-      color: var(--gold-3);
-    }
-
-    .card p {
-      color: rgba(255,248,225,0.68);
-      line-height: 1.6;
-      margin: 0;
-    }
-
-    .code-tabs {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: 20px;
-      overflow: hidden;
-      backdrop-filter: blur(16px);
-    }
-
-    .tab-bar {
-      display: flex;
-      border-bottom: 1px solid var(--glass-border);
-      overflow-x: auto;
-    }
-
-    .tab {
-      padding: 1rem 1.5rem;
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: rgba(255,248,225,0.55);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-    }
-
-    .tab:hover { color: var(--gold-2); }
-    .tab.active {
-      color: var(--gold-4);
-      border-bottom-color: var(--gold-5);
-      background: rgba(255,215,0,0.06);
-    }
-
-    .tab-panel {
-      display: none;
-      position: relative;
-    }
-
-    .tab-panel.active { display: block; }
-
-    pre {
-      margin: 0;
-      padding: 1.75rem;
-      overflow-x: auto;
-      font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
-      font-size: 0.85rem;
-      line-height: 1.65;
-      background: rgba(0,0,0,0.32);
-      color: #e4e4e7;
-    }
-
-    .copy-btn {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      padding: 0.5rem 0.9rem;
-      border-radius: 8px;
-      border: 1px solid var(--ink-5);
-      background: var(--ink-3);
-      color: var(--gold-1);
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .copy-btn:hover { border-color: var(--gold-5); color: var(--gold-2); }
-
-    .test-suite {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .test-case {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 1rem 1.25rem;
-      border-radius: 14px;
-      background: rgba(0,0,0,0.22);
-      border: 1px solid var(--ink-4);
-      transition: border-color 0.2s ease;
-    }
-
-    .test-case:hover { border-color: var(--ink-5); }
-    .test-case.pass { border-color: rgba(34,197,94,0.35); }
-    .test-case.fail { border-color: rgba(239,68,68,0.45); }
-
-    .test-case-left {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .test-input {
-      font-family: monospace;
-      font-size: 0.85rem;
-      color: var(--gold-3);
-    }
-
-    .test-output {
-      font-size: 0.8rem;
-      color: rgba(255,248,225,0.55);
-    }
-
-    .test-status {
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 0.35rem 0.7rem;
-      border-radius: 6px;
-    }
-
-    .test-status.pass {
-      color: var(--success);
-      background: rgba(34,197,94,0.12);
-    }
-
-    .test-status.fail {
-      color: var(--danger);
-      background: rgba(239,68,68,0.12);
-    }
-
-    .footer {
-      text-align: center;
-      padding: 4rem 4vw;
-      border-top: 1px solid var(--glass-border);
-      color: rgba(255,248,225,0.4);
-      font-size: 0.8rem;
-      letter-spacing: 0.08em;
-    }
-
-    .pulse { animation: pulseGlow 2.5s ease-in-out infinite; }
-
-    @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 0 rgba(255,179,0,0); }
-      50% { box-shadow: 0 0 30px rgba(255,179,0,0.12); }
-    }
-
-    @media (max-width: 640px) {
-      nav { display: none; }
-      .input-row input { flex: 1 1 100%; }
-    }
-  </style>
-</head>
-<body>
-  <canvas id="void"></canvas>
-  <div class="grain"></div>
-
-  <div class="page">
-    <header id="topbar">
-      <div class="brand">
-        <div class="brand-mark">M</div>
-        MaxCombine
-      </div>
-      <nav>
-        <a href="#demo">Demo</a>
-        <a href="#logic">Logic</a>
-        <a href="#code">Code</a>
-        <a href="#tests">Tests</a>
-      </nav>
-    </header>
-
-    <section class="hero">
-      <div class="hero-eyebrow">Algorithmic Wealth Engineering</div>
-      <h1 class="hero-title">Concatenate.<br>Domininate.</h1>
-      <p class="hero-subtitle">The largest possible integer from any set of positive integers. Sorted not by magnitude, but by market dominance.</p>
-      <a class="hero-cta" href="#demo">Enter the Trading Floor</a>
-    </section>
-
-    <section id="demo" class="section">
-      <h2 class="section-title">Live Trading Desk</h2>
-      <p class="section-lead">Drop in a list of integers. Watch the engine reorder them for maximum concatenated value.</p>
-      <div class="console">
-        <div class="input-row">
-          <input id="numberInput" type="text" placeholder="Enter positive integers separated by commas or spaces" autocomplete="off" />
-          <button class="btn" id="addBtn">Add Batch</button>
-          <button class="btn btn-gold" id="computeBtn">Compute Max</button>
-          <button class="btn" id="clearBtn">Clear</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MaxCombine | Concatenation Supremacy Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --gold-1: #fff8e1;
+        --gold-2: #ffe082;
+        --gold-3: #ffd54f;
+        --gold-4: #ffb300;
+        --gold-5: #d4af37;
+        --gold-6: #b8860b;
+        --ink-1: #0a0a0b;
+        --ink-2: #111113;
+        --ink-3: #18181b;
+        --ink-4: #27272a;
+        --ink-5: #3f3f46;
+        --success: #22c55e;
+        --danger: #ef4444;
+        --glass: rgba(255, 255, 255, 0.04);
+        --glass-border: rgba(255, 215, 0, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        font-family: "Inter", sans-serif;
+        background: var(--ink-1);
+        color: var(--gold-1);
+        overflow-x: hidden;
+        min-height: 100vh;
+      }
+
+      #void {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      .grain {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0.07;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+
+      .page {
+        position: relative;
+        z-index: 2;
+      }
+
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 4vw;
+        background: linear-gradient(
+          180deg,
+          rgba(10, 10, 11, 0.92) 0%,
+          rgba(10, 10, 11, 0) 100%
+        );
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid transparent;
+        transition:
+          border-color 0.4s ease,
+          background 0.4s ease;
+      }
+
+      header.scrolled {
+        background: rgba(10, 10, 11, 0.82);
+        border-bottom-color: var(--glass-border);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-family: "Playfair Display", serif;
+        font-weight: 900;
+        font-size: 1.5rem;
+        letter-spacing: 0.04em;
+        color: var(--gold-2);
+      }
+
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        border: 2px solid var(--gold-5);
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        font-size: 1.1rem;
+        background: linear-gradient(
+          135deg,
+          rgba(212, 175, 55, 0.15),
+          transparent
+        );
+      }
+
+      nav {
+        display: flex;
+        gap: 2.25rem;
+        font-size: 0.82rem;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      nav a {
+        color: var(--gold-1);
+        text-decoration: none;
+        opacity: 0.7;
+        transition:
+          opacity 0.25s ease,
+          color 0.25s ease;
+      }
+
+      nav a:hover {
+        opacity: 1;
+        color: var(--gold-4);
+      }
+
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 8rem 4vw 5rem;
+        position: relative;
+      }
+
+      .hero-eyebrow {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--gold-5);
+        margin-bottom: 1.25rem;
+      }
+
+      .hero-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(3rem, 9vw, 7.5rem);
+        font-weight: 900;
+        line-height: 0.95;
+        margin: 0 0 1.5rem;
+        background: linear-gradient(
+          180deg,
+          var(--gold-1) 0%,
+          var(--gold-5) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .hero-subtitle {
+        font-family: "Cormorant Garamond", serif;
+        font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+        font-weight: 400;
+        color: rgba(255, 248, 225, 0.72);
+        max-width: 720px;
+        margin: 0 auto 3.5rem;
+        line-height: 1.5;
+      }
+
+      .hero-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 2.25rem;
+        border-radius: 999px;
+        border: 1px solid var(--gold-5);
+        background: linear-gradient(
+          135deg,
+          rgba(212, 175, 55, 0.18),
+          rgba(184, 134, 11, 0.08)
+        );
+        color: var(--gold-2);
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        text-decoration: none;
+        cursor: pointer;
+        transition:
+          transform 0.25s ease,
+          box-shadow 0.25s ease,
+          background 0.25s ease;
+      }
+
+      .hero-cta:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 40px rgba(255, 179, 0, 0.18);
+        background: linear-gradient(
+          135deg,
+          rgba(212, 175, 55, 0.28),
+          rgba(184, 134, 11, 0.14)
+        );
+      }
+
+      .section {
+        padding: 6rem 4vw;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .section-title {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(2rem, 4.5vw, 3.25rem);
+        font-weight: 700;
+        margin: 0 0 1rem;
+        color: var(--gold-2);
+      }
+
+      .section-lead {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 1.35rem;
+        color: rgba(255, 248, 225, 0.7);
+        max-width: 720px;
+        margin: 0 0 3rem;
+        line-height: 1.5;
+      }
+
+      .console {
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        padding: 2rem;
+        backdrop-filter: blur(20px);
+        box-shadow:
+          0 40px 100px rgba(0, 0, 0, 0.45),
+          inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+
+      .input-row {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+      }
+
+      .input-row input {
+        flex: 1 1 220px;
+        min-width: 220px;
+        background: rgba(0, 0, 0, 0.28);
+        border: 1px solid var(--ink-5);
+        border-radius: 12px;
+        padding: 0.95rem 1.25rem;
+        color: var(--gold-1);
+        font-size: 1rem;
+        outline: none;
+        transition:
+          border-color 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+
+      .input-row input:focus {
+        border-color: var(--gold-5);
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.12);
+      }
+
+      .input-row input::placeholder {
+        color: rgba(255, 248, 225, 0.35);
+      }
+
+      .btn {
+        padding: 0.95rem 1.6rem;
+        border-radius: 12px;
+        border: 1px solid var(--ink-5);
+        background: var(--ink-3);
+        color: var(--gold-1);
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+
+      .btn:hover {
+        border-color: var(--gold-5);
+        color: var(--gold-2);
+        background: var(--ink-4);
+      }
+
+      .btn-gold {
+        background: linear-gradient(135deg, var(--gold-5), var(--gold-6));
+        color: var(--ink-1);
+        border-color: var(--gold-5);
+      }
+
+      .btn-gold:hover {
+        box-shadow: 0 0 30px rgba(255, 179, 0, 0.22);
+      }
+
+      .chip-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-bottom: 1.5rem;
+        min-height: 44px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.9rem;
+        border-radius: 999px;
+        background: rgba(255, 215, 0, 0.08);
+        border: 1px solid rgba(255, 215, 0, 0.18);
+        color: var(--gold-2);
+        font-size: 0.9rem;
+        font-weight: 600;
+        animation: chipIn 0.3s ease both;
+      }
+
+      @keyframes chipIn {
+        from {
+          opacity: 0;
+          transform: scale(0.85) translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      .chip button {
+        background: transparent;
+        border: none;
+        color: var(--gold-5);
+        font-size: 1rem;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0 0 0 0.2rem;
+      }
+
+      .result-plate {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 0, 0, 0.45),
+          rgba(0, 0, 0, 0.25)
+        );
+        border: 1px solid var(--gold-5);
+        border-radius: 16px;
+        padding: 1.75rem 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .result-plate::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          120deg,
+          transparent 40%,
+          rgba(255, 215, 0, 0.08) 50%,
+          transparent 60%
+        );
+        transform: translateX(-100%);
+        transition: transform 0.8s ease;
+      }
+
+      .result-plate.shine::before {
+        transform: translateX(100%);
+      }
+
+      .result-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        color: var(--gold-5);
+        margin-bottom: 0.75rem;
+      }
+
+      .result-value {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(1.75rem, 5vw, 3.5rem);
+        font-weight: 900;
+        color: var(--gold-2);
+        word-break: break-all;
+        line-height: 1.1;
+      }
+
+      .result-meta {
+        margin-top: 1rem;
+        font-size: 0.8rem;
+        color: rgba(255, 248, 225, 0.55);
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2rem;
+      }
+
+      .card {
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 1.75rem;
+        backdrop-filter: blur(16px);
+        transition:
+          transform 0.25s ease,
+          border-color 0.25s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(255, 215, 0, 0.28);
+      }
+
+      .card h3 {
+        font-family: "Playfair Display", serif;
+        font-size: 1.35rem;
+        margin: 0 0 0.75rem;
+        color: var(--gold-3);
+      }
+
+      .card p {
+        color: rgba(255, 248, 225, 0.68);
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      .code-tabs {
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        overflow: hidden;
+        backdrop-filter: blur(16px);
+      }
+
+      .tab-bar {
+        display: flex;
+        border-bottom: 1px solid var(--glass-border);
+        overflow-x: auto;
+      }
+
+      .tab {
+        padding: 1rem 1.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(255, 248, 225, 0.55);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+
+      .tab:hover {
+        color: var(--gold-2);
+      }
+      .tab.active {
+        color: var(--gold-4);
+        border-bottom-color: var(--gold-5);
+        background: rgba(255, 215, 0, 0.06);
+      }
+
+      .tab-panel {
+        display: none;
+        position: relative;
+      }
+
+      .tab-panel.active {
+        display: block;
+      }
+
+      pre {
+        margin: 0;
+        padding: 1.75rem;
+        overflow-x: auto;
+        font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
+        font-size: 0.85rem;
+        line-height: 1.65;
+        background: rgba(0, 0, 0, 0.32);
+        color: #e4e4e7;
+      }
+
+      .copy-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.5rem 0.9rem;
+        border-radius: 8px;
+        border: 1px solid var(--ink-5);
+        background: var(--ink-3);
+        color: var(--gold-1);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .copy-btn:hover {
+        border-color: var(--gold-5);
+        color: var(--gold-2);
+      }
+
+      .test-suite {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .test-case {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border-radius: 14px;
+        background: rgba(0, 0, 0, 0.22);
+        border: 1px solid var(--ink-4);
+        transition: border-color 0.2s ease;
+      }
+
+      .test-case:hover {
+        border-color: var(--ink-5);
+      }
+      .test-case.pass {
+        border-color: rgba(34, 197, 94, 0.35);
+      }
+      .test-case.fail {
+        border-color: rgba(239, 68, 68, 0.45);
+      }
+
+      .test-case-left {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .test-input {
+        font-family: monospace;
+        font-size: 0.85rem;
+        color: var(--gold-3);
+      }
+
+      .test-output {
+        font-size: 0.8rem;
+        color: rgba(255, 248, 225, 0.55);
+      }
+
+      .test-status {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.35rem 0.7rem;
+        border-radius: 6px;
+      }
+
+      .test-status.pass {
+        color: var(--success);
+        background: rgba(34, 197, 94, 0.12);
+      }
+
+      .test-status.fail {
+        color: var(--danger);
+        background: rgba(239, 68, 68, 0.12);
+      }
+
+      .footer {
+        text-align: center;
+        padding: 4rem 4vw;
+        border-top: 1px solid var(--glass-border);
+        color: rgba(255, 248, 225, 0.4);
+        font-size: 0.8rem;
+        letter-spacing: 0.08em;
+      }
+
+      .pulse {
+        animation: pulseGlow 2.5s ease-in-out infinite;
+      }
+
+      @keyframes pulseGlow {
+        0%,
+        100% {
+          box-shadow: 0 0 0 rgba(255, 179, 0, 0);
+        }
+        50% {
+          box-shadow: 0 0 30px rgba(255, 179, 0, 0.12);
+        }
+      }
+
+      @media (max-width: 640px) {
+        nav {
+          display: none;
+        }
+        .input-row input {
+          flex: 1 1 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="void"></canvas>
+    <div class="grain"></div>
+
+    <div class="page">
+      <header id="topbar">
+        <div class="brand">
+          <div class="brand-mark">M</div>
+          MaxCombine
         </div>
-        <div class="chip-list" id="chipList"></div>
-        <div class="result-plate" id="resultPlate">
-          <div class="result-label">Maximum Concatenated Integer</div>
-          <div class="result-value" id="resultValue">—</div>
-          <div class="result-meta" id="resultMeta">Waiting for input</div>
-        </div>
-      </div>
-    </section>
+        <nav>
+          <a href="#demo">Demo</a>
+          <a href="#logic">Logic</a>
+          <a href="#code">Code</a>
+          <a href="#tests">Tests</a>
+        </nav>
+      </header>
 
-    <section id="logic" class="section">
-      <h2 class="section-title">The Strategy</h2>
-      <p class="section-lead">This is not ordinary sorting. We use a bespoke comparator that treats every pair as a binary trade: which concatenation yields the higher payout?</p>
-      <div class="grid-2">
-        <div class="card">
-          <h3>Comparator Alpha</h3>
-          <p>For any two strings a and b, compare (b+a) against (a+b). If b+a is larger, b belongs first. This local decision produces the globally maximal concatenation.</p>
-        </div>
-        <div class="card">
-          <h3>Proof of Optimality</h3>
-          <p>The comparator is transitive on digit strings, so a total order exists. By the rearrangement inequality and induction, greedy local placement yields the global maximum.</p>
-        </div>
-        <div class="card">
-          <h3>Complexity</h3>
-          <p>O(n log n · k) where k is average digit length. The comparison itself is O(k) string concat and lexicographic scan. Memory is O(n·k).</p>
-        </div>
-        <div class="card">
-          <h3>Edge Handling</h3>
-          <p>Zero-heavy inputs collapse to zero. The parser rejects negatives and non-integers. Output returns as a number to satisfy the original contract.</p>
-        </div>
-      </div>
-    </section>
+      <section class="hero">
+        <div class="hero-eyebrow">Algorithmic Wealth Engineering</div>
+        <h1 class="hero-title">
+          Concatenate.
+          <br />
+          Domininate.
+        </h1>
+        <p class="hero-subtitle">
+          The largest possible integer from any set of positive integers. Sorted
+          not by magnitude, but by market dominance.
+        </p>
+        <a class="hero-cta" href="#demo">Enter the Trading Floor</a>
+      </section>
 
-    <section id="code" class="section">
-      <h2 class="section-title">Reference Implementations</h2>
-      <p class="section-lead">Polyglot versions for production deployment, hiring portfolios, and water-cooler flexing.</p>
-      <div class="code-tabs">
-        <div class="tab-bar" id="tabBar">
-          <div class="tab active" data-tab="js">JavaScript</div>
-          <div class="tab" data-tab="py">Python</div>
-          <div class="tab" data-tab="ts">TypeScript</div>
-          <div class="tab" data-tab="java">Java</div>
+      <section id="demo" class="section">
+        <h2 class="section-title">Live Trading Desk</h2>
+        <p class="section-lead">
+          Drop in a list of integers. Watch the engine reorder them for maximum
+          concatenated value.
+        </p>
+        <div class="console">
+          <div class="input-row">
+            <input
+              id="numberInput"
+              type="text"
+              placeholder="Enter positive integers separated by commas or spaces"
+              autocomplete="off"
+            />
+            <button class="btn" id="addBtn">Add Batch</button>
+            <button class="btn btn-gold" id="computeBtn">Compute Max</button>
+            <button class="btn" id="clearBtn">Clear</button>
+          </div>
+          <div class="chip-list" id="chipList"></div>
+          <div class="result-plate" id="resultPlate">
+            <div class="result-label">Maximum Concatenated Integer</div>
+            <div class="result-value" id="resultValue">—</div>
+            <div class="result-meta" id="resultMeta">Waiting for input</div>
+          </div>
         </div>
-        <div class="tab-panel active" data-panel="js">
-          <button class="copy-btn" data-copy="js">Copy</button>
-          <pre><code id="code-js">function maxCombine(xs) {
+      </section>
+
+      <section id="logic" class="section">
+        <h2 class="section-title">The Strategy</h2>
+        <p class="section-lead">
+          This is not ordinary sorting. We use a bespoke comparator that treats
+          every pair as a binary trade: which concatenation yields the higher
+          payout?
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Comparator Alpha</h3>
+            <p>
+              For any two strings a and b, compare (b+a) against (a+b). If b+a
+              is larger, b belongs first. This local decision produces the
+              globally maximal concatenation.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Proof of Optimality</h3>
+            <p>
+              The comparator is transitive on digit strings, so a total order
+              exists. By the rearrangement inequality and induction, greedy
+              local placement yields the global maximum.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Complexity</h3>
+            <p>
+              O(n log n · k) where k is average digit length. The comparison
+              itself is O(k) string concat and lexicographic scan. Memory is
+              O(n·k).
+            </p>
+          </div>
+          <div class="card">
+            <h3>Edge Handling</h3>
+            <p>
+              Zero-heavy inputs collapse to zero. The parser rejects negatives
+              and non-integers. Output returns as a number to satisfy the
+              original contract.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="code" class="section">
+        <h2 class="section-title">Reference Implementations</h2>
+        <p class="section-lead">
+          Polyglot versions for production deployment, hiring portfolios, and
+          water-cooler flexing.
+        </p>
+        <div class="code-tabs">
+          <div class="tab-bar" id="tabBar">
+            <div class="tab active" data-tab="js">JavaScript</div>
+            <div class="tab" data-tab="py">Python</div>
+            <div class="tab" data-tab="ts">TypeScript</div>
+            <div class="tab" data-tab="java">Java</div>
+          </div>
+          <div class="tab-panel active" data-panel="js">
+            <button class="copy-btn" data-copy="js">Copy</button>
+            <pre><code id="code-js">function maxCombine(xs) {
   if (!Array.isArray(xs) || xs.length === 0) return 0;
   const nums = xs.filter(x =&gt; Number.isInteger(x) &amp;&amp; x &gt;= 0);
   if (nums.length === 0) return 0;
@@ -623,10 +752,10 @@
   const joined = sorted.join('');
   return joined[0] === '0' ? 0 : Number(joined);
 }</code></pre>
-        </div>
-        <div class="tab-panel" data-panel="py">
-          <button class="copy-btn" data-copy="py">Copy</button>
-          <pre><code id="code-py">from functools import cmp_to_key
+          </div>
+          <div class="tab-panel" data-panel="py">
+            <button class="copy-btn" data-copy="py">Copy</button>
+            <pre><code id="code-py">from functools import cmp_to_key
 from typing import List
 
 def max_combine(xs: List[int]) -&gt; int:
@@ -643,10 +772,10 @@ def max_combine(xs: List[int]) -&gt; int:
         return 0
     joined = ''.join(sorted(map(str, nums), key=cmp_to_key(comparator)))
     return 0 if joined[0] == '0' else int(joined)</code></pre>
-        </div>
-        <div class="tab-panel" data-panel="ts">
-          <button class="copy-btn" data-copy="ts">Copy</button>
-          <pre><code id="code-ts">function maxCombine(xs: number[]): number {
+          </div>
+          <div class="tab-panel" data-panel="ts">
+            <button class="copy-btn" data-copy="ts">Copy</button>
+            <pre><code id="code-ts">function maxCombine(xs: number[]): number {
   if (!Array.isArray(xs) || xs.length === 0) return 0;
   const nums = xs.filter((x): x is number =&gt; Number.isInteger(x) &amp;&amp; x &gt;= 0);
   if (nums.length === 0) return 0;
@@ -654,10 +783,10 @@ def max_combine(xs: List[int]) -&gt; int:
   const joined = sorted.join('');
   return joined[0] === '0' ? 0 : Number(joined);
 }</code></pre>
-        </div>
-        <div class="tab-panel" data-panel="java">
-          <button class="copy-btn" data-copy="java">Copy</button>
-          <pre><code id="code-java">import java.util.*;
+          </div>
+          <div class="tab-panel" data-panel="java">
+            <button class="copy-btn" data-copy="java">Copy</button>
+            <pre><code id="code-java">import java.util.*;
 
 public class MaxCombine {
     public static long maxCombine(int[] xs) {
@@ -672,253 +801,291 @@ public class MaxCombine {
         return joined.charAt(0) == '0' ? 0L : Long.parseLong(joined);
     }
 }</code></pre>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section id="tests" class="section">
-      <h2 class="section-title">Verification Suite</h2>
-      <p class="section-lead">Seven canonical test cases. One click. Immediate verdicts.</p>
-      <div class="console">
-        <div class="test-suite" id="testSuite"></div>
-        <div style="margin-top:1.5rem; text-align:center;">
-          <button class="btn btn-gold pulse" id="runTestsBtn">Run All Tests</button>
+      <section id="tests" class="section">
+        <h2 class="section-title">Verification Suite</h2>
+        <p class="section-lead">
+          Seven canonical test cases. One click. Immediate verdicts.
+        </p>
+        <div class="console">
+          <div class="test-suite" id="testSuite"></div>
+          <div style="margin-top: 1.5rem; text-align: center">
+            <button class="btn btn-gold pulse" id="runTestsBtn">
+              Run All Tests
+            </button>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <footer class="footer">
-      MaxCombine Engine &middot; Built for dominance, not discussion.<br>
-      Inspired by the rearrangement inequality and a refusal to settle for second place.
-    </footer>
-  </div>
+      <footer class="footer">
+        MaxCombine Engine &middot; Built for dominance, not discussion.
+        <br />
+        Inspired by the rearrangement inequality and a refusal to settle for
+        second place.
+      </footer>
+    </div>
 
-  <script>
-    (function() {
-      'use strict';
+    <script>
+      (function () {
+        "use strict";
 
-      const canvas = document.getElementById('void');
-      const ctx = canvas.getContext('2d');
-      let width, height, particles = [];
+        const canvas = document.getElementById("void");
+        const ctx = canvas.getContext("2d");
+        let width,
+          height,
+          particles = [];
 
-      function resize() {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-      }
-
-      class Particle {
-        constructor() { this.reset(); }
-        reset() {
-          this.x = Math.random() * width;
-          this.y = Math.random() * height;
-          this.vx = (Math.random() - 0.5) * 0.4;
-          this.vy = (Math.random() - 0.5) * 0.4;
-          this.size = Math.random() * 1.6 + 0.4;
-          this.alpha = Math.random() * 0.5 + 0.1;
+        function resize() {
+          width = canvas.width = window.innerWidth;
+          height = canvas.height = window.innerHeight;
         }
-        update() {
-          this.x += this.vx;
-          this.y += this.vy;
-          if (this.x < 0 || this.x > width) this.vx *= -1;
-          if (this.y < 0 || this.y > height) this.vy *= -1;
-        }
-        draw() {
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(212, 175, 55, ${this.alpha})`;
-          ctx.fill();
-        }
-      }
 
-      function initParticles() {
-        particles = [];
-        const count = Math.min(90, Math.floor((width * height) / 16000));
-        for (let i = 0; i < count; i++) particles.push(new Particle());
-      }
-
-      function drawVoid() {
-        ctx.clearRect(0, 0, width, height);
-        const g = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width);
-        g.addColorStop(0, 'rgba(212,175,55,0.03)');
-        g.addColorStop(0.5, 'rgba(10,10,11,0)');
-        g.addColorStop(1, 'rgba(10,10,11,0)');
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, width, height);
-
-        for (let i = 0; i < particles.length; i++) {
-          particles[i].update();
-          particles[i].draw();
-          for (let j = i + 1; j < particles.length; j++) {
-            const dx = particles[i].x - particles[j].x;
-            const dy = particles[i].y - particles[j].y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist < 140) {
-              ctx.beginPath();
-              ctx.moveTo(particles[i].x, particles[i].y);
-              ctx.lineTo(particles[j].x, particles[j].y);
-              ctx.strokeStyle = `rgba(212, 175, 55, ${0.08 * (1 - dist/140)})`;
-              ctx.lineWidth = 0.6;
-              ctx.stroke();
-            }
+        class Particle {
+          constructor() {
+            this.reset();
+          }
+          reset() {
+            this.x = Math.random() * width;
+            this.y = Math.random() * height;
+            this.vx = (Math.random() - 0.5) * 0.4;
+            this.vy = (Math.random() - 0.5) * 0.4;
+            this.size = Math.random() * 1.6 + 0.4;
+            this.alpha = Math.random() * 0.5 + 0.1;
+          }
+          update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.x < 0 || this.x > width) this.vx *= -1;
+            if (this.y < 0 || this.y > height) this.vy *= -1;
+          }
+          draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(212, 175, 55, ${this.alpha})`;
+            ctx.fill();
           }
         }
-        requestAnimationFrame(drawVoid);
-      }
 
-      window.addEventListener('resize', () => { resize(); initParticles(); });
-      resize();
-      initParticles();
-      drawVoid();
+        function initParticles() {
+          particles = [];
+          const count = Math.min(90, Math.floor((width * height) / 16000));
+          for (let i = 0; i < count; i++) particles.push(new Particle());
+        }
 
-      const topbar = document.getElementById('topbar');
-      window.addEventListener('scroll', () => {
-        topbar.classList.toggle('scrolled', window.scrollY > 30);
-      });
+        function drawVoid() {
+          ctx.clearRect(0, 0, width, height);
+          const g = ctx.createRadialGradient(
+            width / 2,
+            height / 2,
+            0,
+            width / 2,
+            height / 2,
+            width
+          );
+          g.addColorStop(0, "rgba(212,175,55,0.03)");
+          g.addColorStop(0.5, "rgba(10,10,11,0)");
+          g.addColorStop(1, "rgba(10,10,11,0)");
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, width, height);
 
-      function maxCombine(xs) {
-        if (!Array.isArray(xs) || xs.length === 0) return 0;
-        const nums = xs.filter(x => Number.isInteger(x) && x >= 0);
-        if (nums.length === 0) return 0;
-        const sorted = nums.map(String).sort((a, b) => (b + a).localeCompare(a + b));
-        const joined = sorted.join('');
-        return joined[0] === '0' ? 0 : Number(joined);
-      }
+          for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            particles[i].draw();
+            for (let j = i + 1; j < particles.length; j++) {
+              const dx = particles[i].x - particles[j].x;
+              const dy = particles[i].y - particles[j].y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < 140) {
+                ctx.beginPath();
+                ctx.moveTo(particles[i].x, particles[i].y);
+                ctx.lineTo(particles[j].x, particles[j].y);
+                ctx.strokeStyle = `rgba(212, 175, 55, ${0.08 * (1 - dist / 140)})`;
+                ctx.lineWidth = 0.6;
+                ctx.stroke();
+              }
+            }
+          }
+          requestAnimationFrame(drawVoid);
+        }
 
-      const input = document.getElementById('numberInput');
-      const addBtn = document.getElementById('addBtn');
-      const computeBtn = document.getElementById('computeBtn');
-      const clearBtn = document.getElementById('clearBtn');
-      const chipList = document.getElementById('chipList');
-      const resultPlate = document.getElementById('resultPlate');
-      const resultValue = document.getElementById('resultValue');
-      const resultMeta = document.getElementById('resultMeta');
-      const tabBar = document.getElementById('tabBar');
-      const testSuite = document.getElementById('testSuite');
-      const runTestsBtn = document.getElementById('runTestsBtn');
-
-      let currentNumbers = [];
-
-      function
- parseInput(value) {
-        return value
-          .split(/[,\s]+/)
-          .map(s => s.trim())
-          .filter(Boolean)
-          .map(s => parseInt(s, 10))
-          .filter(n => Number.isInteger(n) && n >= 0);
-      }
-
-      function renderChips() {
-        chipList.innerHTML = '';
-        currentNumbers.forEach((n, i) => {
-          const chip = document.createElement('div');
-          chip.className = 'chip';
-          chip.innerHTML = `<span>${n}</span><button data-index="${i}" aria-label="remove">&times;</button>`;
-          chipList.appendChild(chip);
+        window.addEventListener("resize", () => {
+          resize();
+          initParticles();
         });
-        chipList.querySelectorAll('button').forEach(btn => {
-          btn.addEventListener('click', () => {
-            currentNumbers.splice(parseInt(btn.dataset.index, 10), 1);
+        resize();
+        initParticles();
+        drawVoid();
+
+        const topbar = document.getElementById("topbar");
+        window.addEventListener("scroll", () => {
+          topbar.classList.toggle("scrolled", window.scrollY > 30);
+        });
+
+        function maxCombine(xs) {
+          if (!Array.isArray(xs) || xs.length === 0) return 0;
+          const nums = xs.filter((x) => Number.isInteger(x) && x >= 0);
+          if (nums.length === 0) return 0;
+          const sorted = nums
+            .map(String)
+            .sort((a, b) => (b + a).localeCompare(a + b));
+          const joined = sorted.join("");
+          return joined[0] === "0" ? 0 : Number(joined);
+        }
+
+        const input = document.getElementById("numberInput");
+        const addBtn = document.getElementById("addBtn");
+        const computeBtn = document.getElementById("computeBtn");
+        const clearBtn = document.getElementById("clearBtn");
+        const chipList = document.getElementById("chipList");
+        const resultPlate = document.getElementById("resultPlate");
+        const resultValue = document.getElementById("resultValue");
+        const resultMeta = document.getElementById("resultMeta");
+        const tabBar = document.getElementById("tabBar");
+        const testSuite = document.getElementById("testSuite");
+        const runTestsBtn = document.getElementById("runTestsBtn");
+
+        let currentNumbers = [];
+
+        function parseInput(value) {
+          return value
+            .split(/[,\s]+/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .map((s) => parseInt(s, 10))
+            .filter((n) => Number.isInteger(n) && n >= 0);
+        }
+
+        function renderChips() {
+          chipList.innerHTML = "";
+          currentNumbers.forEach((n, i) => {
+            const chip = document.createElement("div");
+            chip.className = "chip";
+            chip.innerHTML = `<span>${n}</span><button data-index="${i}" aria-label="remove">&times;</button>`;
+            chipList.appendChild(chip);
+          });
+          chipList.querySelectorAll("button").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              currentNumbers.splice(parseInt(btn.dataset.index, 10), 1);
+              renderChips();
+            });
+          });
+        }
+
+        function showResult(value, meta) {
+          resultValue.textContent = value;
+          resultMeta.textContent = meta;
+          resultPlate.classList.remove("shine");
+          void resultPlate.offsetWidth;
+          resultPlate.classList.add("shine");
+        }
+
+        addBtn.addEventListener("click", () => {
+          const parsed = parseInput(input.value);
+          if (parsed.length) {
+            currentNumbers = currentNumbers.concat(parsed);
             renderChips();
-          });
+            input.value = "";
+            input.focus();
+          }
         });
-      }
 
-      function showResult(value, meta) {
-        resultValue.textContent = value;
-        resultMeta.textContent = meta;
-        resultPlate.classList.remove('shine');
-        void resultPlate.offsetWidth;
-        resultPlate.classList.add('shine');
-      }
+        computeBtn.addEventListener("click", () => {
+          if (!currentNumbers.length) {
+            showResult("—", "Add integers before computing");
+            return;
+          }
+          const result = maxCombine(currentNumbers);
+          const order = currentNumbers
+            .map(String)
+            .sort((a, b) => (b + a).localeCompare(a + b))
+            .join(" > ");
+          showResult(result.toLocaleString("en-US"), `Optimal order: ${order}`);
+        });
 
-      addBtn.addEventListener('click', () => {
-        const parsed = parseInput(input.value);
-        if (parsed.length) {
-          currentNumbers = currentNumbers.concat(parsed);
+        clearBtn.addEventListener("click", () => {
+          currentNumbers = [];
           renderChips();
-          input.value = '';
-          input.focus();
-        }
-      });
+          showResult("—", "Waiting for input");
+          input.value = "";
+        });
 
-      computeBtn.addEventListener('click', () => {
-        if (!currentNumbers.length) {
-          showResult('—', 'Add integers before computing');
-          return;
-        }
-        const result = maxCombine(currentNumbers);
-        const order = currentNumbers.map(String).sort((a, b) => (b + a).localeCompare(a + b)).join(' > ');
-        showResult(result.toLocaleString('en-US'), `Optimal order: ${order}`);
-      });
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") addBtn.click();
+        });
 
-      clearBtn.addEventListener('click', () => {
-        currentNumbers = [];
-        renderChips();
-        showResult('—', 'Waiting for input');
-        input.value = '';
-      });
+        tabBar.addEventListener("click", (e) => {
+          if (!e.target.classList.contains("tab")) return;
+          const tab = e.target.dataset.tab;
+          tabBar
+            .querySelectorAll(".tab")
+            .forEach((t) => t.classList.toggle("active", t === e.target));
+          document
+            .querySelectorAll(".tab-panel")
+            .forEach((p) =>
+              p.classList.toggle("active", p.dataset.panel === tab)
+            );
+        });
 
-      input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') addBtn.click();
-      });
-
-      tabBar.addEventListener('click', e => {
-        if (!e.target.classList.contains('tab')) return;
-        const tab = e.target.dataset.tab;
-        tabBar.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === e.target));
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tab));
-      });
-
-      document.querySelectorAll('.copy-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const code = document.getElementById(`code-${btn.dataset.copy}`).textContent;
-          navigator.clipboard.writeText(code).then(() => {
-            const original = btn.textContent;
-            btn.textContent = 'Copied';
-            setTimeout(() => btn.textContent = original, 1500);
+        document.querySelectorAll(".copy-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const code = document.getElementById(
+              `code-${btn.dataset.copy}`
+            ).textContent;
+            navigator.clipboard.writeText(code).then(() => {
+              const original = btn.textContent;
+              btn.textContent = "Copied";
+              setTimeout(() => (btn.textContent = original), 1500);
+            });
           });
         });
-      });
 
-      const testCases = [
-        { input: [1, 3, 3, 4, 55], expected: 554331 },
-        { input: [71, 45, 23, 4, 5], expected: 71545423 },
-        { input: [14, 43, 53, 114, 55], expected: 55534314114 },
-        { input: [1, 34, 3, 98, 9, 76, 45, 4], expected: 998764543431 },
-        { input: [54, 546, 548, 60], expected: 6054854654 },
-        { input: [0, 0, 0], expected: 0 },
-        { input: [10, 2], expected: 210 }
-      ];
+        const testCases = [
+          { input: [1, 3, 3, 4, 55], expected: 554331 },
+          { input: [71, 45, 23, 4, 5], expected: 71545423 },
+          { input: [14, 43, 53, 114, 55], expected: 55534314114 },
+          { input: [1, 34, 3, 98, 9, 76, 45, 4], expected: 998764543431 },
+          { input: [54, 546, 548, 60], expected: 6054854654 },
+          { input: [0, 0, 0], expected: 0 },
+          { input: [10, 2], expected: 210 }
+        ];
 
-      function renderTests(results) {
-        testSuite.innerHTML = '';
-        (results || testCases).forEach((tc, i) => {
-          const actual = results ? tc.actual : null;
-          const pass = results ? actual === tc.expected : null;
-          const row = document.createElement('div');
-          row.className = `test-case ${results ? (pass ? 'pass' : 'fail') : ''}`;
-          row.innerHTML = `
+        function renderTests(results) {
+          testSuite.innerHTML = "";
+          (results || testCases).forEach((tc, i) => {
+            const actual = results ? tc.actual : null;
+            const pass = results ? actual === tc.expected : null;
+            const row = document.createElement("div");
+            row.className = `test-case ${results ? (pass ? "pass" : "fail") : ""}`;
+            row.innerHTML = `
             <div class="test-case-left">
-              <div class="test-input">maxCombine([${tc.input.join(', ')}])</div>
-              <div class="test-output">Expected: ${tc.expected.toLocaleString('en-US')}${results ? ` &middot; Got: ${actual.toLocaleString('en-US')}` : ''}</div>
+              <div class="test-input">maxCombine([${tc.input.join(", ")}])</div>
+              <div class="test-output">Expected: ${tc.expected.toLocaleString("en-US")}${results ? ` &middot; Got: ${actual.toLocaleString("en-US")}` : ""}</div>
             </div>
-            <div class="test-status ${results ? (pass ? 'pass' : 'fail') : ''}">${results ? (pass ? 'Pass' : 'Fail') : 'Pending'}</div>
+            <div class="test-status ${results ? (pass ? "pass" : "fail") : ""}">${results ? (pass ? "Pass" : "Fail") : "Pending"}</div>
           `;
-          testSuite.appendChild(row);
+            testSuite.appendChild(row);
+          });
+        }
+
+        runTestsBtn.addEventListener("click", () => {
+          const results = testCases.map((tc) => ({
+            ...tc,
+            actual: maxCombine(tc.input)
+          }));
+          renderTests(results);
         });
-      }
 
-      runTestsBtn.addEventListener('click', () => {
-        const results = testCases.map(tc => ({ ...tc, actual: maxCombine(tc.input) }));
-        renderTests(results);
-      });
-
-      renderTests();
-      currentNumbers = [1, 34, 3, 98, 9, 76, 45, 4];
-      renderChips();
-      showResult('998,764,543,431', 'Optimal order: 98 > 9 > 76 > 45 > 4 > 34 > 3 > 1');
-    })();
-  </script>
-</body>
+        renderTests();
+        currentNumbers = [1, 34, 3, 98, 9, 76, 45, 4];
+        renderChips();
+        showResult(
+          "998,764,543,431",
+          "Optimal order: 98 > 9 > 76 > 45 > 4 > 34 > 3 > 1"
+        );
+      })();
+    </script>
+  </body>
 </html>
